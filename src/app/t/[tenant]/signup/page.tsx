@@ -1,7 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { isNextBuild } from "@/lib/buildPhase";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function SignupPage({ params }: { params: { tenant: string } }) {
+  if (isNextBuild()) {
+    return (
+      <main className="container">
+        <h1>Building…</h1>
+        <p className="muted">This page loads at runtime.</p>
+      </main>
+    );
+  }
+
   const tenant = await prisma.tenant.findUnique({ where: { slug: params.tenant } });
 
   return (

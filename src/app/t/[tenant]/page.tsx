@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { isNextBuild } from "@/lib/buildPhase";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function TenantHome({ params }: { params: { tenant: string } }) {
   const { tenant } = params;

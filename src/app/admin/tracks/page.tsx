@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getTenantSlug } from "@/lib/tenant";
+import { isNextBuild } from "@/lib/buildPhase";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type StepRow = { id: string; order: number; name: string };
 type TrackRow = { id: string; name: string; description: string | null; isActive: boolean; steps: StepRow[] };
 
 export default async function TracksPage() {
+  if (isNextBuild()) {
+    return (
+      <main className="container">
+        <h1>Building…</h1>
+        <p className="muted">This page loads at runtime.</p>
+      </main>
+    );
+  }
+
   const tenantSlug = getTenantSlug();
   if (!tenantSlug) return null;
 
