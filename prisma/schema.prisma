@@ -23,6 +23,12 @@ model Tenant {
   teams       Team[]
   messageLogs MessageLog[]
 
+  steps       Step[]
+  attendance  Attendance[]
+  completions Completion[]
+  submissions FormSubmission[]
+  teamInterests TeamInterest[]
+  teamAssignments TeamAssignment[]
   @@index([createdAt])
 }
 
@@ -67,6 +73,7 @@ model Person {
   teamInterests TeamInterest[]
   teamAssignments TeamAssignment[]
 
+  messageLogs MessageLog[]
   @@index([tenantId])
   @@index([tenantId, email])
   @@index([tenantId, phone])
@@ -85,6 +92,8 @@ model Track {
   steps  Step[]
   enrollments Enrollment[]
 
+  cohorts     Cohort[]
+  submissions FormSubmission[]
   @@index([tenantId])
   @@index([tenantId, isActive])
 }
