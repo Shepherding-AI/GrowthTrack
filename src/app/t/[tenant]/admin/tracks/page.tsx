@@ -21,7 +21,7 @@ export default async function TracksPage({ params }: { params: { tenant: string 
   
   
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const tenant = await prisma.tenant.findUnique({ where: { slug: params.tenant } });
   if (!tenant) return <div className="card">Unknown tenant.</div>;
 
   const tracks: TrackRow[] = await prisma.track.findMany({

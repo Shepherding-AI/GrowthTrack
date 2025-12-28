@@ -25,7 +25,7 @@ export default async function PeoplePage({ params }: { params: { tenant: string 
   
   
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const tenant = await prisma.tenant.findUnique({ where: { slug: params.tenant } });
   if (!tenant) return <div className="card">Unknown tenant.</div>;
 
   const people: PersonRow[] = await prisma.person.findMany({
