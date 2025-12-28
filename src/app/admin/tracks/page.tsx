@@ -2,6 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getTenantSlug } from "@/lib/tenant";
 
+type StepRow = { id: string; order: number; name: string };
+type TrackRow = { id: string; name: string; description: string | null; isActive: boolean; steps: StepRow[] };
+
 export default async function TracksPage() {
   const tenantSlug = getTenantSlug();
   if (!tenantSlug) return null;
@@ -9,10 +12,16 @@ export default async function TracksPage() {
   const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   if (!tenant) return <div className="card">Unknown tenant.</div>;
 
-  const tracks = await prisma.track.findMany({
+  const tracks: TrackRow[] = await prisma.track.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
-    include: { steps: { orderBy: { order: "asc" } } },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isActive: true,
+      steps: { orderBy: { order: "asc" }, select: { id: true, order: true, name: true } },
+    },
   });
 
   return (
