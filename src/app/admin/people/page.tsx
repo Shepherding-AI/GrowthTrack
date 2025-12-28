@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { Person } from "@prisma/client";
 import { getTenantSlug } from "@/lib/tenant";
 
 export default async function PeoplePage() {
@@ -8,7 +9,7 @@ export default async function PeoplePage() {
   const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   if (!tenant) return <div className="card">Unknown tenant.</div>;
 
-  const people = await prisma.person.findMany({
+  const people: Person[] = await prisma.person.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
     take: 50,
