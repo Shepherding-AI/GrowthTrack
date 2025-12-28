@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/db";
-import type { Person } from "@prisma/client";
 import { getTenantSlug } from "@/lib/tenant";
+
+type PersonRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+};
 
 export default async function PeoplePage() {
   const tenantSlug = getTenantSlug();
@@ -9,10 +16,11 @@ export default async function PeoplePage() {
   const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   if (!tenant) return <div className="card">Unknown tenant.</div>;
 
-  const people: Person[] = await prisma.person.findMany({
+  const people: PersonRow[] = await prisma.person.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
     take: 50,
+    select: { id: true, firstName: true, lastName: true, email: true, phone: true },
   });
 
   return (
