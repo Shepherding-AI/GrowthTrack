@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  people      Person[]
+  tracks      Track[]
+  cohorts     Cohort[]
+  enrollments Enrollment[]
+  automations Automation[]
+  teams       Team[]
+  messageLogs MessageLog[]
+
+  @@index([createdAt])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  tenantId  String
+  email     String
+  name      String?
+  role      UserRole @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  LEADER
+  STAFF
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  tenantId  String
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  submissions FormSubmission[]
+  attendance  Attendance[]
+  completions Completion[]
+  teamInterests TeamInterest[]
+  teamAssignments TeamAssignment[]
+
+  @@index([tenantId])
+  @@index([tenantId, email])
+  @@index([tenantId, phone])
+}
+
+model Track {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  steps  Step[]
+  enrollments Enrollment[]
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+}
+
+model Step {
+  id          String   @id @default(cuid())
+  tenantId    String
+  trackId     String
+  order       Int
+  name        String
+  description String?
+  // "ATTENDANCE" means completion requires attending a cohort of this step.
+  // "FORM" means completion requires a form submission.
+  completionType StepCompletionType @default(ATTENDANCE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  track  Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  cohorts Cohort[]
+  completions Completion[]
+  submissions FormSubmission[]
+
+  @@unique([trackId, order])
+  @@index([tenantId])
+}
+
+enum StepCompletionType {
+  ATTENDANCE
+  FORM
+  MANUAL
+}
+
+model Cohort {
+  id        String   @id @default(cuid())
+  tenantId  String
+  trackId   String
+  stepId    String
+  startsAt  DateTime
+  endsAt    DateTime?
+  location  String?
+  capacity  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  track  Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  step   Step   @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  attendance Attendance[]
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, stepId, startsAt])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  trackId   String
+  status    EnrollmentStatus @default(IN_PROGRESS)
+  enrolledAt DateTime @default(now())
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  track  Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, personId, trackId])
+  @@index([tenantId, status])
+  @@index([tenantId, enrolledAt])
+}
+
+enum EnrollmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  cohortId  String
+  status    AttendanceStatus @default(PRESENT)
+  markedBy  String?
+  markedAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  cohort Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, personId, cohortId])
+  @@index([tenantId, cohortId])
+  @@index([tenantId, personId])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+model Completion {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  stepId    String
+  completedAt DateTime @default(now())
+  source    CompletionSource @default(ATTENDANCE)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  step   Step   @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, personId, stepId])
+  @@index([tenantId, completedAt])
+}
+
+enum CompletionSource {
+  ATTENDANCE
+  FORM
+  MANUAL
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  trackId   String
+  stepId    String?
+  formKey   String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  track  Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  step   Step?  @relation(fields: [stepId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, personId])
+  @@index([tenantId, formKey])
+}
+
+model Automation {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  isActive  Boolean @default(true)
+  trigger   AutomationTrigger
+  // Simple JSON rule/action definition for MVP
+  definition Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isActive])
+}
+
+enum AutomationTrigger {
+  SIGNUP_SUBMITTED
+  ENROLLED_IN_TRACK
+  ATTENDED_COHORT
+  COMPLETED_STEP
+  MISSED_COHORT
+  STALLED_DAYS
+}
+
+model MessageLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String?
+  channel   MessageChannel
+  to        String
+  subject   String?
+  body      String
+  status    MessageStatus @default(QUEUED)
+  provider  String?
+  providerId String?
+  error     String?
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+}
+
+enum MessageChannel {
+  EMAIL
+  SMS
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  interests TeamInterest[]
+  assignments TeamAssignment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model TeamInterest {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  teamId    String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, personId, teamId])
+  @@index([tenantId, teamId])
+}
+
+model TeamAssignment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  personId  String
+  teamId    String
+  status    TeamAssignmentStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, personId, teamId])
+  @@index([tenantId, status])
+}
+
+enum TeamAssignmentStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
