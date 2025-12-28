@@ -17,7 +17,7 @@ export default async function AdminHome({ params }: { params: { tenant: string }
   
   
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const tenant = await prisma.tenant.findUnique({ where: { slug: params.tenant } });
   const counts = await prisma.$transaction([
     prisma.person.count({ where: { tenantId: tenant?.id ?? "___" } }),
     prisma.track.count({ where: { tenantId: tenant?.id ?? "___" } }),
@@ -27,7 +27,7 @@ export default async function AdminHome({ params }: { params: { tenant: string }
   return (
     <div className="grid grid2">
       <div className="card">
-        <h2>{tenant?.name ?? tenantSlug}</h2>
+        <h2>{tenant?.name ?? params.tenant}</h2>
         <p className="muted">Starter admin dashboard.</p>
       </div>
 
