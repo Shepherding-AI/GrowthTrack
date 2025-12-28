@@ -14,7 +14,7 @@ export default function TenantHome({ params }: { params: { tenant: string } }) {
       </div>
 
       <p className="muted">
-        This is the tenant landing page. In production, this is what loads on <span className="badge">{tenant}.yourapp.com</span>.
+        This is the tenant landing page. In production, this is what loads at <span className="badge">/t/{tenant}</span>.
       </p>
 
       <div className="grid grid2">
@@ -31,9 +31,9 @@ export default function TenantHome({ params }: { params: { tenant: string } }) {
           <h2>Admin</h2>
           <p className="muted">Starter admin area (token-protected for now).</p>
           <div className="stack">
-            <Link className="btn btnPrimary" href={`/admin`}>Admin Dashboard</Link>
-            <Link className="btn" href={`/admin/tracks`}>Tracks</Link>
-            <Link className="btn" href={`/admin/people`}>People</Link>
+            <Link className="btn btnPrimary" href={`/t/${tenant}/admin`}>Admin Dashboard</Link>
+            <Link className="btn" href={`/t/${tenant}/admin/tracks`}>Tracks</Link>
+            <Link className="btn" href={`/t/${tenant}/admin/people`}>People</Link>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ export default function MarketingHome() {
     <main className="container">
       <h1>Growth Track SaaS Starter</h1>
       <p className="muted">
-        This is the apex-domain marketing page. Tenants live on subdomains (e.g. <span className="badge">demo.localhost</span>).
+        This is the apex-domain marketing page. Tenants live on path-based tenants (e.g. /t/demo).
       </p>
 
       <div className="card">
@@ -16,7 +16,7 @@ export default function MarketingHome() {
           <li>Start: <span className="badge">npm run dev</span></li>
         </ol>
         <p className="muted">
-          Then open <span className="badge">http://demo.localhost:3000</span> (see README for hosts setup).
+          Then open <span className="badge">http://localhost:3000/t/demo</span> (see README for hosts setup).
         </p>
       </div>
     </main>

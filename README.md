@@ -1,12 +1,9 @@
-# Growth Track SaaS Starter (Multi-tenant, subdomain routing)
+# Growth Track SaaS Starter (Multi-tenant, path-based tenant routing)
 
 A minimal **multi-tenant** Next.js + Postgres + Prisma starter to build a **Growth Track** SaaS for churches.
 
 ## What you get
-- Subdomain tenant routing via `middleware.ts`  
-  - `demo.localhost:3000` → tenant = `demo`
-- Prisma schema designed for Growth Track (tenants, people, tracks/steps, cohorts, enrollments, attendance, completions, automations, logs)
-- Simple token-based admin guard for starter (replace with real auth later)
+- Path-based tenant routing (no wildcard DNS required).
 
 ---
 
@@ -34,7 +31,7 @@ npm run seed
 
 #### Option A (recommended): use `*.localhost` (Chrome supports this)
 Open:
-- http://demo.localhost:3000  ✅
+- http://localhost:3000/t/demo  ✅
 
 > Most modern browsers treat `*.localhost` as loopback without editing hosts.
 
@@ -63,13 +60,13 @@ This starter uses a simple token so the repo runs without external auth provider
 Send header `x-admin-token: <ADMIN_TOKEN>` for admin routes.
 
 ### Or set cookie in your browser console
-On `http://demo.localhost:3000`, open devtools console and run:
+On `http://localhost:3000/t/demo`, open devtools console and run:
 ```js
 document.cookie = "gt_admin=dev_admin_token_change_me; path=/";
 ```
 
 Then visit:
-- http://demo.localhost:3000/admin
+- http://localhost:3000/t/demo/t/[tenant]/admin
 
 > Replace with real auth (Auth.js/Clerk/etc.) once your core product flow is built.
 
@@ -82,7 +79,7 @@ Then visit:
   - `/signup` → `/t/{tenant}/signup`
   - `/me` → `/t/{tenant}/me`
   - any other path → `/t/{tenant}{path}`
-- `/admin` stays `/admin` but tenant context is provided via header `x-tenant-slug`
+- `/t/[tenant]/admin` stays `/t/[tenant]/admin` but tenant context is provided via header `x-tenant-slug`
 
 ---
 
